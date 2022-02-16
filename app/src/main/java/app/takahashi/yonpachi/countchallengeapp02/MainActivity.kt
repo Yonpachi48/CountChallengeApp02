@@ -32,13 +32,17 @@ class MainActivity : AppCompatActivity() {
             setContentView(this.root)
         }
 
-        dataStore  = getSharedPreferences("DataStore", Context.MODE_PRIVATE)
-        count = dataStore.getInt("COUNT", 0)
-        binding.countText.text = count.toString()
+        // SoundPoolの設定
+        mSoundPool = SoundPool.Builder().build()
+        snd0 = mSoundPool.load(this, mSoundResource, 0)
+
+        dataStore  = getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        count = dataStore.getInt(COUNT_KEY, 0)
+        setText()
 
         binding.plusButton.setOnClickListener{
             count += 1
-            changeTextColor(count)
+            setText()
         }
     }
 
@@ -46,42 +50,50 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            .build()
+        mSoundPool = SoundPool.Builder().build()
+        snd0 = mSoundPool.load(this, mSoundResource, 0)
+    }
 
-        mSoundPool = SoundPool.Builder()
-            .setAudioAttributes(audioAttributes)
-            .setMaxStreams(1)
-            .build()
+    override fun onPause() {
 
-        snd0 = mSoundPool.load(applicationContext, mSoundResource, 0)
+        val editor = dataStore.edit()
+        editor.putInt(COUNT_KEY, count)
+        editor.apply()
+        Log.d(SHARED_PREFERENCES_NAME, "${dataStore.getInt(COUNT_KEY, 0)}")
+
+        super.onPause()
     }
 
 
+    // 呼び出されていない
     override fun onDestroy() {
         super.onDestroy()
+
         mSoundPool.release()
 
         val editor = dataStore.edit()
-        editor.putInt("COUNT", count)
+        editor.putInt(COUNT_KEY, count)
         editor.apply()
-        Log.d("saveData", "${dataStore.getInt("COUNT", 0)}")
+        Log.d(SHARED_PREFERENCES_NAME, "${dataStore.getInt(COUNT_KEY, 0)}")
     }
 
 
-    private fun changeTextColor(count: Int) {
+    private fun setText() {
         when((count+2)%2) {
             1 -> {
                 binding.countText.setTextColor(Color.RED)
                 binding.countText.text = count.toString()
                 mSoundPool.play(snd0, 1.0F, 1.0F, 0, 0, 1.0F)
             } else -> {
-            binding.countText.setTextColor(Color.BLUE)
-            binding.countText.text = count.toString()
+                binding.countText.setTextColor(Color.BLUE)
+                binding.countText.text = count.toString()
             }
         }
+    }
+
+    companion object {
+        const val SHARED_PREFERENCES_NAME = "DataSource"
+        const val COUNT_KEY = "count"
     }
 
 
