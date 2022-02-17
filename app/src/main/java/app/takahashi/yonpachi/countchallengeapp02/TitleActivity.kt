@@ -18,6 +18,7 @@ class TitleActivity : AppCompatActivity() {
 
         binding.toMainButton.setOnClickListener{
             val intent = Intent(this,MainActivity::class.java)
+            startActivity(intent)
         }
     }
 }
